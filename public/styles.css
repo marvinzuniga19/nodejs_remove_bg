@@ -211,7 +211,7 @@ h1 em {
 .drop {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1.15rem;
   padding: 1.1rem 1.25rem;
   cursor: pointer;
 }
@@ -249,12 +249,13 @@ h1 em {
 
 .thumb {
   flex: none;
-  width: 52px;
-  height: 52px;
+  width: 110px;
+  height: 110px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 14px;
   overflow: hidden;
-  background: var(--surface-2);
+  background: var(--surface-2) repeating-conic-gradient(rgba(255, 255, 255, 0.03) 0% 25%, transparent 0% 50%) 50% / 12px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   animation: rise 0.28s var(--ease) both;
 }
 
@@ -263,6 +264,11 @@ h1 em {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.25s var(--ease);
+}
+
+.drop:hover .thumb img {
+  transform: scale(1.04);
 }
 
 .uploadbar input[type='file'] {
@@ -590,6 +596,11 @@ footer {
   }
   .drop {
     flex-wrap: wrap;
+    gap: 0.85rem;
+  }
+  .thumb {
+    width: 90px;
+    height: 90px;
   }
   .actions {
     flex-direction: column;
