@@ -14,6 +14,9 @@ const dropSub = document.getElementById('dropSub');
 const fileMeta = document.getElementById('fileMeta');
 const serverStatus = document.getElementById('serverStatus');
 const dropzone = document.getElementById('dropzone');
+const dropIcon = document.querySelector('.drop-icon');
+const sourceThumb = document.getElementById('sourceThumb');
+const sourceThumbImg = document.getElementById('sourceThumbImg');
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB (igual que el servidor)
 const ALLOWED_TYPES = [
@@ -88,6 +91,9 @@ function clearSelection() {
     URL.revokeObjectURL(currentPreviewUrl);
     currentPreviewUrl = null;
   }
+  sourceThumbImg.removeAttribute('src');
+  sourceThumb.hidden = true;
+  dropIcon.removeAttribute('hidden');
   removeBtn.disabled = true;
   dropTitle.textContent = 'Elige una imagen o arrástrala aquí';
   dropSub.textContent = 'PNG · JPG · WEBP · GIF · AVIF · BMP · TIFF';
@@ -109,6 +115,9 @@ function selectFile(file) {
     URL.revokeObjectURL(currentPreviewUrl);
   }
   currentPreviewUrl = URL.createObjectURL(file);
+  sourceThumbImg.src = currentPreviewUrl;
+  sourceThumb.hidden = false;
+  dropIcon.setAttribute('hidden', '');
   dropTitle.textContent = file.name;
   dropSub.textContent = `${file.type.replace('image/', '').toUpperCase()} · ${formatSize(file.size)}`;
   fileMeta.textContent = 'Lista para procesar';
