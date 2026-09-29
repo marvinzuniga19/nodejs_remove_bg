@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FondoFuera — Eliminador de fondos</title>
+    <meta
+      name="description"
+      content="Sube una imagen y quítale el fondo automáticamente en tu propio servidor. Sin subirla a ningún servicio externo."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b0e13'/%3E%3Cpath d='M8 22l5-6 4 4 3-4 4 6' stroke='%2358e1b0' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="dropzone" id="dropzone" hidden aria-hidden="true">
+      <div class="dropzone-card">
+        <svg viewBox="0 0 32 32" width="40" height="40" fill="none" aria-hidden="true">
+          <path
+            d="M16 6v14m0 0-5.5-5.5M16 20l5.5-5.5M6 24v2h20v-2"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <p class="dropzone-title">Suelta la imagen</p>
+        <p class="dropzone-sub">PNG, JPG, WEBP, GIF, AVIF, BMP o TIFF · máx. 20MB</p>
+      </div>
+    </div>
+    <div class="glow" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="FondoFuera, inicio">
+        <svg viewBox="0 0 32 32" width="30" height="30" fill="none" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="9" stroke="currentColor" stroke-width="1.6" opacity=".35" />
+          <path
+            d="M7.5 23l5.5-6.5 4 4.5 3-4 4.5 6"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle cx="20" cy="10.5" r="2.4" stroke="currentColor" stroke-width="1.8" />
+        </svg>
+        <span>FondoFuera</span>
+      </a>
+      <span class="status" id="serverStatus">motor listo</span>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Eliminador de fondos</p>
+        <h1>Sube una foto.<br /><em>Llévate el recorte en PNG.</em></h1>
+        <p class="lede">
+          El motor de segmentación se ejecuta en este servidor, con el modelo empaquetado: la imagen
+          entra, se recorta y desaparece. Máximo 20MB, una imagen cada vez.
+        </p>
+
+        <form class="uploadbar" id="uploadForm" autocomplete="off">
+          <label class="drop" for="imageInput">
+            <svg class="drop-icon" viewBox="0 0 24 24" width="26" height="26" fill="none" aria-hidden="true">
+              <path
+                d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="drop-copy">
+              <span class="drop-title" id="dropTitle">Elige una imagen o arrástrala aquí</span>
+              <span class="drop-sub" id="dropSub">PNG · JPG · WEBP · GIF · AVIF · BMP · TIFF</span>
+            </span>
+            <span class="sr-only">Seleccionar imagen</span>
+          </label>
+          <input
+            type="file"
+            id="imageInput"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/bmp,image/tiff"
+          />
+          <div class="actions">
+            <span class="meta-info" id="fileMeta">Sin imagen seleccionada</span>
+            <button type="submit" class="primary" id="removeBtn" disabled>
+              <span class="label">Eliminar fondo</span>
+              <span class="spinner" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+        <p class="hint" id="hint">
+          Consejo: el procesado tarda unos segundos porque el modelo corre en CPU. Puedes seguir
+          usando la página mientras tanto no envíes otra imagen.
+        </p>
+      </section>
+
+      <section id="formMessage" class="alert" role="alert" hidden></section>
+
+      <section id="resultContainer" class="card result" hidden>
+        <div class="preview-wrap">
+          <img id="resultImage" alt="Imagen sin fondo" />
+          <span class="badge" id="resultBadge" hidden></span>
+        </div>
+        <div class="result-body">
+          <h2>Imagen lista</h2>
+          <p class="sub" id="resultMeta">PNG con canal alfa, listo para descargar.</p>
+          <div class="bar" id="resultBar" hidden aria-hidden="true"><i></i></div>
+          <p class="sub" id="status" role="status" aria-live="polite"></p>
+          <div class="result-actions">
+            <button type="button" class="primary" id="downloadBtn">Descargar PNG</button>
+            <button type="button" class="ghost" id="resetBtn">Procesar otra</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="notice">
+        <strong>Privado por diseño.</strong> El archivo se guarda en disco solo durante el
+        procesado y se elimina al terminar, también si algo falla. Nada sale de este servidor.
+      </section>
+    </main>
+
+    <footer>FondoFuera · Express + @imgly/background-removal-node · uso personal</footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
