@@ -3,5 +3,3 @@ uploads/*
 !uploads/.gitkeep
 .env
 .DS_Store
-.agents/skills
-skills-lock.json
