@@ -10,7 +10,8 @@ const PORT = Number(process.env.PORT) || 3000;
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_MAX = Number(process.env.RATE_LIMIT_MAX) || 10;
-const MODEL = process.env.MODEL || 'medium'; // small | medium | large
+const VALID_MODELS = ['small', 'medium'];
+const MODEL = VALID_MODELS.includes(process.env.MODEL) ? process.env.MODEL : 'medium';
 
 // Tipos de imagen permitidos -> extensión normalizada (nunca se toma del cliente)
 const ALLOWED_MIME = {
@@ -108,10 +109,11 @@ function rateLimit(req, res, next) {
       if (now - entry.start >= RATE_WINDOW_MS) hits.delete(key);
     }
   }
-  let entry = hits.get(req.ip);
+  const clientIp = req.ip || req.socket?.remoteAddress || 'unknown';
+  let entry = hits.get(clientIp);
   if (!entry || now - entry.start >= RATE_WINDOW_MS) {
     entry = { start: now, count: 0 };
-    hits.set(req.ip, entry);
+    hits.set(clientIp, entry);
   }
   entry.count += 1;
   if (entry.count > RATE_MAX) {
@@ -124,6 +126,8 @@ function rateLimit(req, res, next) {
 
 // La inferencia satura la CPU: solo se procesa una imagen a la vez
 let processing = false;
+let isWarmingUp = true;
+
 function singleFlight(req, res, next) {
   if (processing) {
     return res
@@ -132,8 +136,10 @@ function singleFlight(req, res, next) {
   }
   processing = true;
   res.locals.ownsProcessing = true;
+  res.on('close', () => releaseProcessing(res));
   next();
 }
+
 function releaseProcessing(res) {
   if (res.locals.ownsProcessing) {
     res.locals.ownsProcessing = false;
@@ -143,6 +149,15 @@ function releaseProcessing(res) {
 
 // Servir archivos estáticos (frontend)
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Estado del servidor y del motor de inferencia
+app.get('/api/status', (req, res) => {
+  res.json({
+    status: isWarmingUp ? 'warming_up' : processing ? 'busy' : 'ready',
+    model: MODEL,
+    maxFileSize: MAX_FILE_SIZE
+  });
+});
 
 // Ruta para procesar la imagen
 app.post('/remove-bg', rateLimit, singleFlight, upload.single('image'), async (req, res) => {
@@ -206,6 +221,7 @@ const TINY_PNG = Buffer.from(
 );
 async function warmUpModel() {
   processing = true;
+  isWarmingUp = true;
   try {
     const t0 = Date.now();
     await removeBackground(new Blob([TINY_PNG], { type: 'image/png' }), removeBgConfig);
@@ -213,6 +229,7 @@ async function warmUpModel() {
   } catch (error) {
     console.error('No se pudo precargar el modelo:', error.message);
   } finally {
+    isWarmingUp = false;
     processing = false;
   }
 }

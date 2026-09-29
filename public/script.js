@@ -77,6 +77,7 @@ function resetResult() {
     URL.revokeObjectURL(currentResultUrl);
     currentResultUrl = null;
   }
+  resultImage.onload = null;
   resultImage.removeAttribute('src');
   resultBadge.hidden = true;
   resultBar.hidden = true;
@@ -95,7 +96,7 @@ function clearSelection() {
   sourceThumb.hidden = true;
   dropIcon.removeAttribute('hidden');
   removeBtn.disabled = true;
-  dropTitle.textContent = 'Elige una imagen o arrástrala aquí';
+  dropTitle.textContent = 'Elige una imagen, arrástrala o pégala (Ctrl+V)';
   dropSub.textContent = 'PNG · JPG · WEBP · GIF · AVIF · BMP · TIFF';
   fileMeta.textContent = 'Sin imagen seleccionada';
 }
@@ -259,4 +260,42 @@ downloadBtn.addEventListener('click', () => {
   link.click();
 });
 
-setServerStatus('motor listo', 'ok');
+// Pegar imagen desde el portapapeles (Ctrl+V / Cmd+V)
+window.addEventListener('paste', (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) {
+        const ext = file.type.split('/')[1] || 'png';
+        const namedFile = file.name && file.name !== 'image.png' ? file : new File([file], `captura-${Date.now()}.${ext}`, { type: file.type });
+        selectFile(namedFile);
+        break;
+      }
+    }
+  }
+});
+
+// Consultar estado real del servidor y del motor de IA
+async function checkStatus() {
+  try {
+    const res = await fetch('/api/status');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.status === 'warming_up') {
+      setServerStatus('calentando motor…', 'busy');
+      setTimeout(checkStatus, 1500);
+    } else if (data.status === 'busy') {
+      setServerStatus('procesando…', 'busy');
+      setTimeout(checkStatus, 2500);
+    } else {
+      setServerStatus('motor listo', 'ok');
+    }
+  } catch (_) {
+    setServerStatus('sin conexión', 'busy');
+    setTimeout(checkStatus, 5000);
+  }
+}
+
+checkStatus();
